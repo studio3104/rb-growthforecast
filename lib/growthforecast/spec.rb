@@ -121,7 +121,9 @@ class GrowthForecast::Spec
 
     target_data = target.send(:data)
 
+    count_of_missing_specitem_graph = 0
     @spec['data'].each_with_index do |item, index|
+      index_for_target_data = index - count_of_missing_specitem_graph
       specitem = spec_data_tmpl.merge(item)
 
       #path
@@ -137,28 +139,30 @@ class GrowthForecast::Spec
       specitem_graph = cache.get(*path_element)
       unless specitem_graph
         errors.push("data[#{index}]: specified graph '#{replaced_path}' not found")
+        count_of_missing_specitem_graph += 1
+        next
       end
 
       #data(sub graph) size
-      unless target_data[index]
+      unless target_data[index_for_target_data]
         errors.push("data[#{index}]: graph member missing")
         next
       end
 
       #data graph_id
-      if specitem_graph.id.to_i != target_data[index].graph_id.to_i
+      if specitem_graph.id.to_i != target_data[index_for_target_data].graph_id.to_i
         errors.push("data[#{index}]: mismatch, spec '#{replaced_path}'(graph id #{specitem_graph.id}) but id '#{target_data[index].graph_id}'")
       end
       #gmode, type
-      if specitem.has_key?('gmode') && specitem['gmode'] != target_data[index].gmode
-        errors.push("data[#{index}]: gmode mismatch, spec '#{specitem['gmode']}' but '#{target_data[index].gmode}'")
+      if specitem.has_key?('gmode') && specitem['gmode'] != target_data[index_for_target_data].gmode
+        errors.push("data[#{index}]: gmode mismatch, spec '#{specitem['gmode']}' but '#{target_data[index_for_target_data].gmode}'")
       end
-      if specitem.has_key?('type') && specitem['type'] != target_data[index].type
-        errors.push("data[#{index}]: type mismatch, spec '#{specitem['type']}' but '#{target_data[index].type}'")
+      if specitem.has_key?('type') && specitem['type'] != target_data[index_for_target_data].type
+        errors.push("data[#{index}]: type mismatch, spec '#{specitem['type']}' but '#{target_data[index_for_target_data].type}'")
       end
       #stack: stack of first data item is nonsense
-      if index > 0 && specitem.has_key?('stack') && specitem['stack'] != target_data[index].stack
-        errors.push("data[#{index}]: stack mismatch, spec '#{specitem['stack']}' but '#{target_data[index].stack}'")
+      if index > 0 && specitem.has_key?('stack') && specitem['stack'] != target_data[index_for_target_data].stack
+        errors.push("data[#{index}]: stack mismatch, spec '#{specitem['stack']}' but '#{target_data[index_for_target_data].stack}'")
       end
     end
 
